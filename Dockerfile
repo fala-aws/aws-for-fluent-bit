@@ -41,9 +41,9 @@ ENV PATH ${PATH}:/home/.gimme/versions/go1.17.linux.arm64/bin:/home/.gimme/versi
 RUN go version
 
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/
-RUN git clone https://github.com/zhonghui12/fluent-bit.git /tmp/fluent-bit-$FLB_VERSION/
+RUN git clone https://github.com/matthewfala/fluent-bit.git /tmp/fluent-bit-$FLB_VERSION/
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/build/
-RUN git fetch origin && git checkout custom-1.8.7 && git status
+RUN git fetch origin && git checkout imds-check-blocking && git status
 RUN cmake -DFLB_RELEASE=On \
           -DFLB_TRACE=Off \
           -DFLB_JEMALLOC=On \
