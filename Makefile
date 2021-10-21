@@ -21,8 +21,8 @@ release:
 .PHONY: cloudwatch-dev
 cloudwatch-dev:
 	docker build \
-	--build-arg CLOUDWATCH_PLUGIN_CLONE_URL=${CLOUDWATCH_PLUGIN_CLONE_URL} \
-	--build-arg CLOUDWATCH_PLUGIN_BRANCH=${CLOUDWATCH_PLUGIN_BRANCH} \
+	--build-arg CLOUDWATCH_PLUGIN_CLONE_URL="https://github.com/fala-aws/amazon-cloudwatch-logs-for-fluent-bit" \
+	--build-arg CLOUDWATCH_PLUGIN_BRANCH="truncation-sanitization-r" \
 	--no-cache -t aws-fluent-bit-plugins:latest -f Dockerfile.plugins .
 	docker build -t amazon/aws-for-fluent-bit:latest -f Dockerfile .
 
