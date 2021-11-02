@@ -41,9 +41,19 @@ ENV PATH ${PATH}:/home/.gimme/versions/go1.17.linux.arm64/bin:/home/.gimme/versi
 RUN go version
 
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/
-RUN git clone https://github.com/PettitWesley/fluent-bit.git /tmp/fluent-bit-$FLB_VERSION/
+RUN git clone https://github.com/fluent/fluent-bit.git /tmp/fluent-bit-$FLB_VERSION/
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/build/
-RUN git fetch origin && git checkout 1_8_8_patch && git status
+RUN git fetch --all --tags && git checkout tags/v${FLB_VERSION} -b v${FLB_VERSION} && git describe --tags
+
+# Apply Fluent Bit patches to base version
+RUN \
+git fetch https://github.com/krispraws/fluent-bit.git tls_net_read_fix \
+  && git cherry-pick 8d1cfeb5ba830b360fe6e1228190ed900842a3ea; \
+git fetch https://github.com/zhonghui12/fluent-bit.git custom-1.8.7 \
+  && git cherry-pick 30fc6305695623cbc95d51df07ae185dfec8bff2 \
+git fetch https://github.com/fala-aws/aws-for-fluent-bit.git patch-1.8.8-file-out-aws-http \
+  && git cherry-pick 9ae9014ba6b4aaad8d7d81bc63306f03afe1548a
+
 RUN cmake -DFLB_RELEASE=On \
           -DFLB_TRACE=Off \
           -DFLB_JEMALLOC=On \
