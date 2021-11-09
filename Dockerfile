@@ -54,8 +54,8 @@ git fetch https://github.com/krispraws/fluent-bit.git tls_net_read_fix \
   && git cherry-pick 8d1cfeb5ba830b360fe6e1228190ed900842a3ea; \
 git fetch https://github.com/zhonghui12/fluent-bit.git custom-1.8.7 \
   && git cherry-pick 30fc6305695623cbc95d51df07ae185dfec8bff2; \
-git fetch https://github.com/matthewfala/fluent-bit.git 1.8.8-file-out-aws-http \
-  && git cherry-pick 085aa7799768a1f2c58253b181e3d01bf3ddb452
+git fetch https://github.com/matthewfala/fluent-bit.git cloudwatch-serialization-exception \
+  && git cherry-pick 7b27898d83f152ba3613e3445322437b401eff13
 
 RUN cmake -DFLB_RELEASE=On \
           -DFLB_TRACE=Off \
