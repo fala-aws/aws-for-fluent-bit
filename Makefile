@@ -15,7 +15,6 @@ all: release
 
 .PHONY: release
 release:
-	docker build --no-cache -t aws-fluent-bit-plugins:latest -f Dockerfile.plugins .
 	docker build -t amazon/aws-for-fluent-bit:latest -f Dockerfile .
 
 .PHONY: cloudwatch-dev

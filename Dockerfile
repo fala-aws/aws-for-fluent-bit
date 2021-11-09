@@ -45,14 +45,17 @@ RUN git clone https://github.com/fluent/fluent-bit.git /tmp/fluent-bit-$FLB_VERS
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/build/
 RUN git fetch --all --tags && git checkout tags/v${FLB_VERSION} -b v${FLB_VERSION} && git describe --tags
 
+RUN git config --global user.email "falamatt@amazon.com" \
+  && git config --global user.name "Matthew Fala"
+
 # Apply Fluent Bit patches to base version
 RUN \
 git fetch https://github.com/krispraws/fluent-bit.git tls_net_read_fix \
   && git cherry-pick 8d1cfeb5ba830b360fe6e1228190ed900842a3ea; \
 git fetch https://github.com/zhonghui12/fluent-bit.git custom-1.8.7 \
-  && git cherry-pick 30fc6305695623cbc95d51df07ae185dfec8bff2 \
-git fetch https://github.com/fala-aws/aws-for-fluent-bit.git patch-1.8.8-file-out-aws-http \
-  && git cherry-pick 9ae9014ba6b4aaad8d7d81bc63306f03afe1548a
+  && git cherry-pick 30fc6305695623cbc95d51df07ae185dfec8bff2; \
+git fetch https://github.com/matthewfala/fluent-bit.git 1.8.8-file-out-aws-http \
+  && git cherry-pick 085aa7799768a1f2c58253b181e3d01bf3ddb452
 
 RUN cmake -DFLB_RELEASE=On \
           -DFLB_TRACE=Off \
