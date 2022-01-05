@@ -15,3 +15,7 @@ https://github.com/matthewfala/fluent-bit.git immutable-1.8-imds-r2-cherry-picks
 # IMDS graceful fallback from IMDSv2 to IMDSv1 (https://github.com/aws/aws-for-fluent-bit/issues/259)
 # Commit 5 -- aws: revised imds fallback to v1 if token request fails
 https://github.com/matthewfala/fluent-bit.git immutable-1.8-imds-r2-cherry-picks-r3 5a9ad8e43dfbdd93fa5f621f607d9548450eb23a
+
+# Expand filestore to 64+ files
+# Commit 6 -- fstore: hold more than 64 files
+https://github.com/matthewfala/fluent-bit.git immutable-1.8-plus-files-s3-r1 43cc75b3708afc9b776f2e13b1dc169e47a374bb
