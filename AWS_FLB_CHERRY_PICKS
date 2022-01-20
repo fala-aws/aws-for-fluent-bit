@@ -17,5 +17,5 @@ https://github.com/matthewfala/fluent-bit.git immutable-1.8-imds-r2-cherry-picks
 https://github.com/matthewfala/fluent-bit.git immutable-1.8-imds-r2-cherry-picks-r3 5a9ad8e43dfbdd93fa5f621f607d9548450eb23a
 
 # Event loop migrate to priority queue
-# Commit 6 -- engine: event loop fifo -> priority queue
-https://github.com/matthewfala/fluent-bit.git immutable-1.8-reorder-eventloop-r1 4ef1edcfb672bc36c551dd4cffaeb2236197263a
+# Commit 6 -- engine: event loop fifo -> priority queue (with unified flush) 
+https://github.com/matthewfala/fluent-bit.git 1.8-reorder-eventloop-r2-px 31a357b7a928da6e66834af40d277dc895f6bd88
