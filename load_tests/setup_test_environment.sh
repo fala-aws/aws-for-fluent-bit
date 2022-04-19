@@ -10,5 +10,5 @@ read -r -a outputArray <<< "$stackOutputs"
 export S3_BUCKET_NAME="${outputArray[0]}"
 
 # Set necessary images as env vars
-export FLUENT_BIT_IMAGE="${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon/aws-for-fluent-bit-test:latest"
+export FLUENT_BIT_IMAGE="public.ecr.aws/aws-observability/aws-for-fluent-bit:latest"
 export APP_IMAGE="075490442118.dkr.ecr.us-west-2.amazonaws.com/load-test-fluent-bit-app-image:latest"
