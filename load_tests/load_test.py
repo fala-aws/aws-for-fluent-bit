@@ -9,6 +9,8 @@ import validation_bar
 from datetime import datetime, timezone
 import create_testing_resources.kinesis_s3_firehose.resource_resolver as resource_resolver
 
+print("Updated aws-for-fluent-bit log")
+
 IS_TASK_DEFINITION_PRINTED = False
 PLATFORM = os.environ['PLATFORM'].lower()
 OUTPUT_PLUGIN = os.environ['OUTPUT_PLUGIN'].lower()
