@@ -50,7 +50,10 @@ RUN go version
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/
 RUN git clone https://github.com/fluent/fluent-bit.git /tmp/fluent-bit-$FLB_VERSION/
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/build/
-RUN git fetch --all --tags && git checkout tags/v${FLB_VERSION} -b v${FLB_VERSION} && git describe --tags
+RUN git checkout 1.9
+RUN git pull
+RUN git checkout 27b9f6be6530dedffb93a125a07252a3dc1a242f
+RUN git log -n 5
 
 RUN git config --global user.email "aws-firelens@amazon.com" \
   && git config --global user.name "FireLens Team"

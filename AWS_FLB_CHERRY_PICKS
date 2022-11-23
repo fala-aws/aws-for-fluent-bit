@@ -1,2 +1,6 @@
 # Different User Agent for Windows vs Linux
 https://github.com/PettitWesley/fluent-bit.git aws-windows-metrics d6d8c964b2814fe9c631b4f6a01ca4af4409779c
+
+# Synchronous Cloudwatch Networking
+# https://github.com/matthewfala/fluent-bit.git flb-output-synchronous-minimal d7a30d1b5ed1c6136f4c4f4169d92e262d87e8da
+# https://github.com/matthewfala/fluent-bit.git flb-output-synchronous-minimal 3510ee358dbbaba09baa0252ebaa84c23eba55c4
