@@ -1,2 +1,6 @@
 # Different User Agent for Windows vs Linux
 https://github.com/PettitWesley/fluent-bit.git aws-windows-metrics d6d8c964b2814fe9c631b4f6a01ca4af4409779c
+
+# ES cherry-picks
+https://github.com/matthewfala/fluent-bit.git aoss-1.9 6272acb8d455ee46b3255db55d1ea668f4622313
+https://github.com/matthewfala/fluent-bit.git aoss-1.9 d5186e7fda0b05d0bf8677d01a392149044707f7
