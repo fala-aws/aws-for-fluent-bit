@@ -1,1 +1,2 @@
-# No added cherrypicks in this release
+# Add disable_sequence_token which enables full concurrency (async networking) and allows you to enable more than 1 worker
+https://github.com/matthewfala/fluent-bit.git 1.9.10-disable-sequence-token 815e30ecb8a86ed1df3b0fb15281912f50a771be
