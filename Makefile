@@ -134,3 +134,7 @@ clean:
 	docker image remove -f aws-fluent-bit-plugins:latest
 	docker image remove -f amazon/aws-for-fluent-bit:latest
 	docker image prune -f
+
+.PHONY: quick-debug
+quick-debug:
+	docker build -t amazon/aws-for-fluent-bit:quick-debug -f Dockerfile.quick-debug .
