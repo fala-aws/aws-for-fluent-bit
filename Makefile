@@ -124,6 +124,10 @@ integ-dev: release
 integ:
 	./integ/integ.sh cicd
 
+.PHONY: cherrypick-test
+cherrypick-test:
+	docker build -t amazon/aws-for-fluent-bit:cherrypick-test -f Dockerfile.cherrypick-test .
+
 .PHONY: delete-resources
 delete-resources:
 	./integ/integ.sh delete

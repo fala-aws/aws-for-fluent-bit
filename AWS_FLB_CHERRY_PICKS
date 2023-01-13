@@ -1,2 +1,9 @@
-# Revert datadog fix PR to resolve segfault
+# Revert Datadog fix PR to mitigate segfault
 https://github.com/matthewfala/fluent-bit.git ecs-datadog-sequential-revert 98313ebf206eec4a4e5375b352fc36849b762323
+
+# Add back Datadog fixes that do not trigger segfault
+https://github.com/matthewfala/fluent-bit.git ecs-datadog-sequential-revert acc01a4bf4ce656023d82943bec2683b5b7755e5
+https://github.com/matthewfala/fluent-bit.git ecs-datadog-sequential-revert ac30b7c876a95d44c33a406b2b58ce08b978587e
+
+# Datadog Partial Fix Patch
+https://github.com/matthewfala/fluent-bit.git datadog-ecs-patch 3c1ad69ada5bb6f2e448c6f39a1a0ea6a6f4ff17
