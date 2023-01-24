@@ -31,6 +31,9 @@ class TestingResources(core.Stack):
             desired_capacity=5,
             vpc=vpc,
             vpc_subnets={ 'subnet_type': ec2.SubnetType.PUBLIC },
+            metadata_options=autoscaling.CfnLaunchConfiguration.MetadataOptionsProperty(
+                http_put_response_hop_limit=2,
+            ),
         )
         asg.apply_removal_policy(core.RemovalPolicy.DESTROY)
 
