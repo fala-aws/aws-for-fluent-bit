@@ -23,3 +23,6 @@ https://github.com/PettitWesley/fluent-bit.git s3-log-key-warn-1_9 308b73558fb2d
 
 # ECS Filter
 https://github.com/PettitWesley/fluent-bit.git ecs-empty-metadata-fix-one-commit 24934c938e8f63700edf1230a09e4483ac5df6a3
+
+# Add disable_sequence_token which enables full concurrency (async networking) and allows you to enable more than 1 worker
+https://github.com/matthewfala/fluent-bit.git sequence-token-dep-1.9.10 813d38d90476c4bb5a9a87d87d96f91feec9ffed
