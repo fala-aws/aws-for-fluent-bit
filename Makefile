@@ -55,6 +55,15 @@ debug:
 	docker build --no-cache -t aws-fluent-bit-plugins:latest -f Dockerfile.plugins .
 	docker build --no-cache -t amazon/aws-for-fluent-bit:debug -f Dockerfile.debug .
 
+.PHONY: debug-s3
+debug-s3: linux-plugins
+	docker system prune -f
+	docker build --no-cache -t amazon/aws-for-fluent-bit:debug-s3 -f Dockerfile.debug-s3 .
+
+.PHONY: debug-s3-quick
+debug-s3-quick:
+	docker build -t amazon/aws-for-fluent-bit:debug-s3 -f Dockerfile.debug-s3 .
+
 .PHONY: validate-version-file-format
 validate-version-file-format:
 	jq -e . windows.versions && true || false
