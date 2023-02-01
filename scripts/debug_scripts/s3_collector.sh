@@ -8,17 +8,18 @@ paths=$3
 IFS=',' read -ra items <<< "$paths"
 
 # S3 uploader
-./s3_uploader $bucket /s3-upload $interval &
+s3_uploader.sh $bucket /s3_upload $interval &
 pid1=$!
 
 # Fluent Bit
-(/fluent-bit/bin/fluent-bit -c /fluent-bit/etc/fluent-bit.conf; echo "\nwaiting 2 minutes for coredump to upload\n"; sleep 120) &
+(/fluent-bit/bin/fluent-bit -c /fluent-bit/etc/fluent-bit.conf; echo "\nwaiting 2 minutes for coredump to upload\n"; sleep 120; echo "exiting") &
 pid2=$!
 
 # All monitored log directories
 # Loop over array items and run magic mirror
 for item in "${items[@]}"; do
-  ./magic_mirror "$item" /s3-upload$item -1 &
+  echo "starting magic mirror from $item to /s3_upload$item"
+  magic_mirror.sh "$item" /s3_upload$item -1 &
   pid4=$!
   pids=( "${pids[@]}" "$pid4" )
 done

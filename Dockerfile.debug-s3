@@ -154,6 +154,10 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 RUN unzip awscliv2.zip
 RUN ./aws/install
 RUN rm awscliv2.zip
+
+RUN amazon-linux-extras install epel -y \
+    && yum update \
+    && yum install -y inotify-tools 
 RUN yum remove unzip -y \
     && yum clean all \
     && rm -rf /var/cache/yum
@@ -163,8 +167,6 @@ FROM aws-cli-included as debug-s3
 
 # Optional Metrics endpoint
 EXPOSE 2020
-
-WORKDIR /var/tmp
 
 # Default: Run under valgrind
 # alternatively, you can change this to run FB directly and try
@@ -178,9 +180,16 @@ WORKDIR /var/tmp
 # 
 RUN mkdir /cores && chmod 777 /cores
 
+# In order for  echo '/cores/core_%e.%p' | tee /proc/sys/kernel/core_pattern to be avoided on host,
+# change working directory to the cores folder to run fluent bit from there.
+WORKDIR /cores
+
 # Make an upload folder to hold all the logs and coredumps
 RUN mkdir /s3_upload && chmod 777 /s3_upload
 RUN ln -s /cores /s3_upload
+
+# TEMPORARY TEST
+RUN touch /s3_upload/myfile.txt
 
 # TEMPORARY
 RUN mkdir /logs; touch /logs/log.txt; echo "mylog" > /logs/log.txt
@@ -188,9 +197,10 @@ RUN mkdir /logs; touch /logs/log.txt; echo "mylog" > /logs/log.txt
 # Copy over debug scripts
 COPY /scripts/debug_scripts /debug_scripts/
 RUN chmod +x /debug_scripts/*
+RUN cp /debug_scripts/* /bin/
 
 # Begin the s3-sync script, mirror script, and fluent bit
-CMD /debug_scripts/s3_collector.sh $BUCKET $INTERVAL $PATHS
+CMD s3_collector.sh $BUCKET $INTERVAL $PATHS
 
 # To test this locally, please run
 # docker run -d --privileged --ulimit core=-1 -v `pwd`/output-containerjet/coredumps:/cores -v `pwd`/output-containerjet/out:/app/output --env-file="./.dockerenv" amazon/firelens-datajet:executor-latest
