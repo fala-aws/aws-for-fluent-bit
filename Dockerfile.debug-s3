@@ -145,8 +145,6 @@ ADD ecs /ecs/
 FROM test-accelerator as aws-cli-included
 
 ENV BUCKET .
-ENV INTERVAL 100
-ENV PATHS ""
 
 RUN yum install unzip -y
 WORKDIR /var/tmp
@@ -155,13 +153,9 @@ RUN unzip awscliv2.zip
 RUN ./aws/install
 RUN rm awscliv2.zip
 
-RUN amazon-linux-extras install epel -y \
-    && yum update \
-    && yum install -y inotify-tools 
 RUN yum remove unzip -y \
     && yum clean all \
     && rm -rf /var/cache/yum
-
 
 FROM aws-cli-included as debug-s3
 
@@ -184,23 +178,10 @@ RUN mkdir /cores && chmod 777 /cores
 # change working directory to the cores folder to run fluent bit from there.
 WORKDIR /cores
 
-# Make an upload folder to hold all the logs and coredumps
-RUN mkdir /s3_upload && chmod 777 /s3_upload
-RUN ln -s /cores /s3_upload
+COPY ./core.7 /mycore
 
-# TEMPORARY TEST
-RUN touch /s3_upload/myfile.txt
-
-# TEMPORARY
-RUN mkdir /logs; touch /logs/log.txt; echo "mylog" > /logs/log.txt
-
-# Copy over debug scripts
-COPY /scripts/debug_scripts /debug_scripts/
-RUN chmod +x /debug_scripts/*
-RUN cp /debug_scripts/* /bin/
-
-# Begin the s3-sync script, mirror script, and fluent bit
-CMD s3_collector.sh $BUCKET $INTERVAL $PATHS
+# Upload coredumps to s3
+CMD /fluent-bit/bin/fluent-bit -c /fluent-bit/etc/fluent-bit.conf; ls /cores; aws s3 cp /cores s3://${BUCKET}/ --recursive
 
 # To test this locally, please run
 # docker run -d --privileged --ulimit core=-1 -v `pwd`/output-containerjet/coredumps:/cores -v `pwd`/output-containerjet/out:/app/output --env-file="./.dockerenv" amazon/firelens-datajet:executor-latest

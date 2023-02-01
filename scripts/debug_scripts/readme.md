@@ -28,3 +28,8 @@ docker run -it -v /tmp/fake_apache_logs:/logs_mount/apache --env BUCKET=test-s3-
 ```
 
 test-s3-instrumentation
+
+# Basic s3-coredump
+```
+docker run -it --env BUCKET=test-s3-instrumentation amazon/aws-for-fluent-bit:debug-s3
+```

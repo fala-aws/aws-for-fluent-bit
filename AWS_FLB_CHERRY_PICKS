@@ -25,5 +25,15 @@ https://github.com/PettitWesley/fluent-bit.git s3-log-key-warn-1_9 308b73558fb2d
 https://github.com/PettitWesley/fluent-bit.git ecs-empty-metadata-fix-one-commit 24934c938e8f63700edf1230a09e4483ac5df6a3
 
 # Add segfault for testing
-https://github.com/matthewfala/fluent-bit.git segfault 80d6006cf2f72a695ae49506c9f350c466910d3e
-https://github.com/matthewfala/fluent-bit.git segfault f8a01822eb2530cd318d6ee3fe3e427a4c191442
+# https://github.com/matthewfala/fluent-bit.git segfault 80d6006cf2f72a695ae49506c9f350c466910d3e
+# https://github.com/matthewfala/fluent-bit.git segfault f8a01822eb2530cd318d6ee3fe3e427a4c191442
+# https://github.com/matthewfala/fluent-bit.git segfault 025f1f18238a56df787ab0eb051b19ec67955a2e
+
+# Useful debug messages for input events
+# input chunk append message with input name context and number of records
+https://github.com/PettitWesley/fluent-bit.git chunk-append-context 8fc357c6f245a16c4a1e3355a8ccfc2571b876ea
+# in_tail file name context for inotify events
+https://github.com/PettitWesley/fluent-bit.git tail-modify-debug-context ebd9de85bada6d9976a3ca27f2520395b46c309a
+
+# Instrument events in input event loop.
+https://github.com/matthewfala/fluent-bit.git tail-instrumentation 01f96376fb48da90ab0af8be4c89c6dfb2142453
