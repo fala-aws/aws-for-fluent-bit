@@ -142,7 +142,7 @@ COPY --from=aws-fluent-bit-plugins:latest /kinesis-streams/THIRD-PARTY \
 COPY AWS_FOR_FLUENT_BIT_VERSION /AWS_FOR_FLUENT_BIT_VERSION
 ADD ecs /ecs/
 
-FROM test-accelerator as aws-cli-included
+# FROM test-accelerator as aws-cli-included
 
 ENV BUCKET .
 
@@ -157,7 +157,7 @@ RUN yum remove unzip -y \
     && yum clean all \
     && rm -rf /var/cache/yum
 
-FROM aws-cli-included as debug-s3
+# FROM aws-cli-included as debug-s3
 
 # Optional Metrics endpoint
 EXPOSE 2020
@@ -177,8 +177,6 @@ RUN mkdir /cores && chmod 777 /cores
 # In order for  echo '/cores/core_%e.%p' | tee /proc/sys/kernel/core_pattern to be avoided on host,
 # change working directory to the cores folder to run fluent bit from there.
 WORKDIR /cores
-
-COPY ./core.7 /mycore
 
 # Upload coredumps to s3
 CMD /fluent-bit/bin/fluent-bit -c /fluent-bit/etc/fluent-bit.conf; ls /cores; aws s3 cp /cores s3://${BUCKET}/ --recursive
