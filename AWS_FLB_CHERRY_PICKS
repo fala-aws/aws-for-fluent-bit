@@ -36,3 +36,10 @@ https://github.com/matthewfala/fluent-bit.git 2.31.1-all-cherrypicks 26c0b0c779b
 
 # Resolve cloudwatch_logs duplicate tag match SIGSEGV issue
 https://github.com/matthewfala/fluent-bit.git sync-scheduler-fix-1.9 2614c46af3a051b2758bef57f01f6b10a8e73b62
+
+# Patch 2.31.3
+https://github.com/PettitWesley/fluent-bit.git sync-io-keepalive-fix 7b4550486b7e8e02b773894d31a08b0cb18154e3
+
+https://github.com/PettitWesley/fluent-bit.git mk_event_inject_conn_fix 0f5efc921950feeee99d9251cb330b27d3639863
+
+https://github.com/PettitWesley/fluent-bit.git mk_event_add_corruption-one-commit 33651cca41e9f84ce8930a9bca9d3d7319e50fbd
