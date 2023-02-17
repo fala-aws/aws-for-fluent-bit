@@ -43,3 +43,6 @@ https://github.com/PettitWesley/fluent-bit.git sync-io-keepalive-fix 7b4550486b7
 https://github.com/PettitWesley/fluent-bit.git mk_event_inject_conn_fix 0f5efc921950feeee99d9251cb330b27d3639863
 
 https://github.com/PettitWesley/fluent-bit.git mk_event_add_corruption-one-commit 33651cca41e9f84ce8930a9bca9d3d7319e50fbd
+
+# Add disable_sequence_token which enables full concurrency (async networking) and allows you to enable more than 1 worker
+https://github.com/matthewfala/fluent-bit.git 1.9.10-disable-sequence-token 815e30ecb8a86ed1df3b0fb15281912f50a771be
