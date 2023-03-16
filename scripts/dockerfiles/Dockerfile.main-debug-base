@@ -1,5 +1,5 @@
 FROM amazon/aws-for-fluent-bit:build as builder
-COPY Dockerfile.build /Dockerfile.1.build
+COPY ./scripts/dockerfiles/Dockerfile.build /Dockerfile.1.build
 
 # Build Fluent Bit with debug compiler flags
 RUN cmake -DFLB_DEBUG=On \

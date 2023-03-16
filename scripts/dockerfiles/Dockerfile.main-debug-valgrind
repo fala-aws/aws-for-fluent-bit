@@ -1,5 +1,5 @@
-FROM amazon/aws-for-fluent-bit:vanilla-debug-base
-COPY Dockerfile.vanilla-debug-base /Dockerfile.2.vanilla-debug-base
+FROM amazon/aws-for-fluent-bit:main-debug-base
+COPY ./scripts/dockerfiles/Dockerfile.main-debug-base /Dockerfile.2.main-debug-base
 
 # Default: Run under valgrind
 # alternatively, you can change this to run FB directly and try

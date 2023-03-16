@@ -2,7 +2,7 @@
 export AWS_REGION="us-west-2"
 export PROJECT_ROOT="$(pwd)"
 export VOLUME_MOUNT_CONTAINER="/out"
-export ValidateS3Dockerfile="Dockerfile"
+export ValidateS3Dockerfile="./scripts/dockerfiles/Dockerfile"
 
 test_cloudwatch() {
 	export ARCHITECTURE=$(uname -m)

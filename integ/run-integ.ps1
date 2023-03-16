@@ -80,7 +80,7 @@ $env:AWS_FOR_FLUENT_BIT_CONTAINER_NAME = "aws-for-fluent-bit-$($env:TAG)"
 $env:ARCHITECTURE= "x86-64"
 $env:LOG_GROUP_NAME="fluent-bit-integ-test-$Platform-$env:ARCHITECTURE"
 $env:VOLUME_MOUNT_CONTAINER="C:/out"
-$env:ValidateS3Dockerfile = "Dockerfile.windows"
+$env:ValidateS3Dockerfile = "./scripts/dockerfiles/Dockerfile.windows"
 # For Windows, we need to specify a static IP address for the fluent-bit container.
 # This is because fluent-bit container would be started first and then the other containers
 # would need to connect to the fluent-bit container over a TCP socket.
