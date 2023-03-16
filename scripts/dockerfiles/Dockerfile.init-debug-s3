@@ -1,7 +1,7 @@
 FROM amazon/aws-for-fluent-bit:init-debug-base
 COPY ./scripts/dockerfiles/Dockerfile.init-debug-base /Dockerfile.2.init-debug-base
 
-ENV S3_BUCKET customer-must-set-bucket-env-var-to-upload-core-dump
+ENV S3_BUCKET ""
 ENV S3_KEY_PREFIX issue
 
 RUN yum install -y unzip zip curl gdb
@@ -16,8 +16,8 @@ RUN yum remove unzip -y \
     && yum clean all \
     && rm -rf /var/cache/yum
 
-# Run Fluent Bit from the cores-out folder and collect crash symbols here.
-# Move symbols to /cores folder on completion
+# Run Fluent Bit from the cores-out folder and collect crash symbols
+# Move symbols to /cores folder after processing
 RUN mkdir /cores-out
 WORKDIR /cores-out
 
@@ -26,7 +26,7 @@ WORKDIR /cores-out
 
 # Only last CMD command will be executed, automatically replaces the original entrypoint
 CMD echo "AWS for Fluent Bit - Debug Init Image with S3 Core Uploader"; \
-    if [ "$S3_BUCKET" == "customer-must-set-bucket-env-var-to-upload-core-dump" ]; then \
+    if [ "$S3_BUCKET" == "" ]; then \
         echo "Note: Please set S3_BUCKET environment variable to your crash symbol upload destination S3 bucket"; \
     fi; \
     if [ "$S3_KEY_PREFIX" == "issue" ]; then \
@@ -42,7 +42,10 @@ CMD echo "AWS for Fluent Bit - Debug Init Image with S3 Core Uploader"; \
     mv `ls /cores-out/core*` ${CORE_FILENAME}.core; \
     cp /fluent-bit/bin/fluent-bit ./${CORE_FILENAME}.executable; \
     gdb -batch -ex 'thread apply all bt full' -ex 'quit' '/fluent-bit/bin/fluent-bit' ${CORE_FILENAME}.core > /cores-out/${CORE_FILENAME}.stacktrace \
-    zip /cores-out/${CORE_FILENAME}.zip *; \
+    zip -r /${CORE_FILENAME}.all.zip /cores-out; \
+    mv /${CORE_FILENAME}.all.zip /cores-out/${CORE_FILENAME}.all.zip; \
+    zip /cores-out/${CORE_FILENAME}.core.zip /cores-out/${CORE_FILENAME}.core; \
+    rm /cores-out/${CORE_FILENAME}.core; \
     cp /cores-out/* /cores/; \
     aws s3 cp /cores-out s3://${S3_BUCKET}/${S3_KEY_PREFIX}/ --recursive; \
     echo "Stacktrace - ${CORE_FILENAME}.stacktrace:"; \
