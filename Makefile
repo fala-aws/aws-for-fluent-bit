@@ -17,12 +17,16 @@ all: release
 DOCKER_BUILD_FLAGS=--no-cache
 
 .PHONY: release
-release: build
+release: build build-init
 	docker system prune -f
 	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:main-release -f ./scripts/dockerfiles/Dockerfile.main-release .
 	docker tag amazon/aws-for-fluent-bit:main-release amazon/aws-for-fluent-bit:latest
 	docker system prune -f
 	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:init-latest -f ./scripts/dockerfiles/Dockerfile.init-release .
+
+.PHONY: build-init
+release: build-init
+	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:build-init      -f ./scripts/dockerfiles/Dockerfile.build-init .
 
 .PHONY: debug
 debug: main-debug init-debug
@@ -72,8 +76,7 @@ main-debug: main-debug-base
 	docker tag amazon/aws-for-fluent-bit:debug-s3 amazon/aws-for-fluent-bit:debug
 
 .PHONY: init-debug
-init-debug: main-debug-base
-	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:build-init      -f ./scripts/dockerfiles/Dockerfile.build-init .
+init-debug: main-debug-base build-init
 	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:init-debug-base -f ./scripts/dockerfiles/Dockerfile.init-debug-base .
 	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:init-debug-fs   -f ./scripts/dockerfiles/Dockerfile.init-debug-fs .
 	docker build $(DOCKER_BUILD_FLAGS) -t amazon/aws-for-fluent-bit:init-debug-s3   -f ./scripts/dockerfiles/Dockerfile.init-debug-s3 .
@@ -165,17 +168,23 @@ delete-resources:
 clean:
 	rm -rf ./build
 	docker image remove -f aws-fluent-bit-plugins:latest
-	docker image remove -f amazon/aws-for-fluent-bit:latest
 
+	docker image remove -f amazon/aws-for-fluent-bit:build
+	docker image remove -f amazon/aws-for-fluent-bit:build-init
+	docker image remove -f amazon/aws-for-fluent-bit:init-debug-base
+	docker image remove -f amazon/aws-for-fluent-bit:main-debug-base
+
+	docker image remove -f amazon/aws-for-fluent-bit:latest
+	docker image remove -f amazon/aws-for-fluent-bit:init-latest
+	docker image remove -f amazon/aws-for-fluent-bit:debug
+	docker image remove -f amazon/aws-for-fluent-bit:init-debug
+
+	docker image remove -f amazon/aws-for-fluent-bit:init-release
+	docker image remove -f amazon/aws-for-fluent-bit:main-release
 	docker image remove -f amazon/aws-for-fluent-bit:debug-fs
 	docker image remove -f amazon/aws-for-fluent-bit:debug-s3
 	docker image remove -f amazon/aws-for-fluent-bit:debug-valgrind
-	docker image remove -f amazon/aws-for-fluent-bit:debug
-
-	docker image remove -f amazon/aws-for-fluent-bit:build-init
-	docker image remove -f amazon/aws-for-fluent-bit:init-debug-base
 	docker image remove -f amazon/aws-for-fluent-bit:init-debug-fs
 	docker image remove -f amazon/aws-for-fluent-bit:init-debug-s3
-	docker image remove -f amazon/aws-for-fluent-bit:init-debug
 
 	docker image prune -f

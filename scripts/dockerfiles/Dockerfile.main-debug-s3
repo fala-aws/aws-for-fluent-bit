@@ -26,7 +26,7 @@ RUN mkdir /cores-out
 WORKDIR /cores-out
 
 # Only last CMD command will be executed, automatically replaces the original entrypoint
-CMD echo "AWS for Fluent Bit - Debug Image with S3 Core Uploader"; \
+CMD echo "AWS for Fluent Bit Container Image Version `cat /AWS_FOR_FLUENT_BIT_VERSION` - Debug Image with S3 Core Uploader"; \
     if [ "$S3_BUCKET" == "" ]; then \
         echo "Note: Please set S3_BUCKET environment variable to your crash symbol upload destination S3 bucket"; \
     fi; \
@@ -41,11 +41,13 @@ CMD echo "AWS for Fluent Bit - Debug Image with S3 Core Uploader"; \
     mv `ls /cores-out/core*` ${CORE_FILENAME}.core; \
     cp /fluent-bit/bin/fluent-bit ./${CORE_FILENAME}.executable; \
     gdb -batch -ex 'thread apply all bt full' -ex 'quit' '/fluent-bit/bin/fluent-bit' ${CORE_FILENAME}.core > /cores-out/${CORE_FILENAME}.stacktrace \
-    zip -r /${CORE_FILENAME}.all.zip /cores-out; \
+    zip -r /cores-out/${CORE_FILENAME}.all.zip /cores-out; \
     mv /${CORE_FILENAME}.all.zip /cores-out/${CORE_FILENAME}.all.zip; \
     zip /cores-out/${CORE_FILENAME}.core.zip /cores-out/${CORE_FILENAME}.core; \
     rm /cores-out/${CORE_FILENAME}.core; \
     cp /cores-out/* /cores/; \
     aws s3 cp /cores-out s3://${S3_BUCKET}/${S3_KEY_PREFIX}/ --recursive; \
     echo "Stacktrace - ${CORE_FILENAME}.stacktrace:"; \
-    cat /cores/${CORE_FILENAME}.stacktrace
+    cat /cores/${CORE_FILENAME}.stacktrace; \
+    echo "Waiting 2 minutes for EFS core file transfers"; \
+    sleep 120
