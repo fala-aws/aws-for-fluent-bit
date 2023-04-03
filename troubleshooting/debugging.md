@@ -525,11 +525,11 @@ CMD valgrind --leak-check=full --error-limit=no /fluent-bit/bin/fluent-bit -c /f
 
 ##### Option 2: Debug Build (More robust)
 
-The best option, which is most likely to catch any leak or segfault is to create a fresh build of the image using the [`Dockerfile.debug`](https://github.com/aws/aws-for-fluent-bit/blob/mainline/Dockerfile.debug) in AWS for Fluent Bit. This will create a fresh build with debug mode and valgrind support enabled, which gives the highest chance that Valgrind will be able to produce useful diagnostic information about the issue.
+The best option, which is most likely to catch any leak or segfault is to create a fresh build of the image using the [`Dockerfile.main-debug-valgrind`](https://github.com/aws/aws-for-fluent-bit/blob/mainline/scripts/dockerfiles/Dockerfile.main-debug-valgrind) in AWS for Fluent Bit. This will create a fresh build with debug mode and valgrind support enabled, which gives the highest chance that Valgrind will be able to produce useful diagnostic information about the issue.
 
 1. Check out the git tag for the version that saw the problem
-2. Make sure the `FLB_VERSION` at the top of the `Dockerfile.debug` is set to the same version as the main Dockerfile for that tag. 
-3. Build this dockerfile with the `make valgrind` target. 
+2. Make sure the `FLB_VERSION` at the top of the `scripts/dockerfiles/Dockerfile.build` is set to the same version as the main Dockerfile for that tag.
+3. Build this dockerfile with the `make debug-valgrind` target.
 
 ### Segfaults and crashes (SIGSEGV)
 
@@ -870,6 +870,13 @@ You can send logs to a specific RUN_ID via with a configuration such as:
      log_group_name my_unique_log_group_${RUN_ID}
      ...
 ```
+
+**Building init-debug Image**
+You can also build an `init-debug` image via
+```
+make init-debug
+```
+The configuration of the init-debug image is the same as the debug image, except it has the added features of the Init image.
 
 ##### 2. Setup your own repro attempt 
 
