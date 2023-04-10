@@ -1,7 +1,7 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder
 
 # Fluent Bit version; update these for each release
-ENV FLB_VERSION 1.9.9
+ENV FLB_VERSION leonardo
 # branch to pull parsers from in github.com/fluent/fluent-bit-docker-image
 ENV FLB_DOCKER_BRANCH 1.8
 
@@ -77,7 +77,7 @@ FROM builder as compile
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/
 RUN git clone https://github.com/fluent/fluent-bit.git /tmp/fluent-bit-$FLB_VERSION/
 WORKDIR /tmp/fluent-bit-$FLB_VERSION/build/
-RUN git fetch --all --tags && git checkout tags/v${FLB_VERSION} -b v${FLB_VERSION} && git describe --tags
+RUN git fetch --all --tags && git checkout master && git describe --tags
 
 # Apply Fluent Bit patches to base version
 COPY AWS_FLB_CHERRY_PICKS \
