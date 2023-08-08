@@ -115,6 +115,10 @@ spain_region="eu-south-2"
 
 spain_account_id="146576467002"
 
+israel_region="613967699436"
+
+israel_account="613967699436"
+
 zurich_region="eu-central-2"
 
 zurich_account_id="269912160255"
@@ -765,6 +769,10 @@ if [ "${1}" = "publish" ]; then
 	if [ "${2}" = "${spain_region}" ]; then
 		publish_ecr ${spain_region} ${spain_account_id}
 	fi
+ 
+	if [ "${2}" = "${israel_region}" ]; then
+		publish_ecr ${israel_region} ${israel_account_id}
+	fi
 
 	if [ "${2}" = "${zurich_region}" ]; then
 		publish_ecr ${zurich_region} ${zurich_account_id}
@@ -830,6 +838,10 @@ if [ "${1}" = "verify" ]; then
 		verify_ecr ${spain_region} ${spain_account_id}
 	fi
 
+ 	if [ "${2}" = "${israel_region}" ]; then
+		verify_ecr ${israel_region} ${israel_account_id}
+	fi
+
 	if [ "${2}" = "${zurich_region}" ]; then
 		verify_ecr ${zurich_region} ${zurich_account_id}
 	fi
@@ -890,6 +902,10 @@ if [ "${1}" = "publish-ssm" ]; then
 		publish_ssm ${spain_region} ${spain_account_id}.dkr.ecr.${spain_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 	fi
 
+	if [ "${2}" = "${israel_region}" ]; then
+		publish_ssm ${israel_region} ${israel_account_id}.dkr.ecr.${israel_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
+	fi
+
 	if [ "${2}" = "${zurich_region}" ]; then
 		publish_ssm ${zurich_region} ${zurich_account_id}.dkr.ecr.${zurich_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 	fi
@@ -944,6 +960,10 @@ if [ "${1}" = "verify-ssm" ]; then
 
 	if [ "${2}" = "${spain_region}" ]; then
 		verify_ssm ${spain_region} false ${spain_account_id}
+	fi
+
+ 	if [ "${2}" = "${israel_region}" ]; then
+		verify_ssm ${israel_region} false ${israel_account_id}
 	fi
 
 	if [ "${2}" = "${zurich_region}" ]; then
@@ -1002,6 +1022,10 @@ if [ "${1}" = "rollback-ssm" ]; then
 		rollback_ssm ${spain_region}
 	fi
 
+ 	if [ "${2}" = "${israel_region}" ]; then
+		rollback_ssm ${israel_region}
+	fi
+
 	if [ "${2}" = "${zurich_region}" ]; then
 		rollback_ssm ${zurich_region}
 	fi
@@ -1040,6 +1064,8 @@ if [ "${1}" = "cicd-publish" ]; then
 		sync_image_version ${uae_region} ${uae_account_id}
 	elif [ "${2}" = "${spain_region}" ]; then
 		sync_image_version ${spain_region} ${spain_account_id}
+  	elif [ "${2}" = "${israel_region}" ]; then
+		sync_image_version ${israel_region} ${israel_account_id}
 	elif [ "${2}" = "${zurich_region}" ]; then
 		sync_image_version ${zurich_region} ${zurich_account_id}
 	elif [ "${2}" = "${hyderabad_region}" ]; then
@@ -1089,6 +1115,8 @@ if [ "${1}" = "cicd-verify" ]; then
 		verify_ecr ${uae_region} ${uae_account_id} true
 	elif [ "${2}" = "${spain_region}" ]; then
 		verify_ecr ${spain_region} ${spain_account_id} true
+	elif [ "${2}" = "${israel_region}" ]; then
+		verify_ecr ${israel_region} ${israel_account_id} true
 	elif [ "${2}" = "${zurich_region}" ]; then
 		verify_ecr ${zurich_region} ${zurich_account_id} true
 	elif [ "${2}" = "${hyderabad_region}" ]; then
@@ -1131,6 +1159,8 @@ if [ "${1}" = "cicd-publish-ssm" ]; then
 		publish_ssm ${uae_region} ${uae_account_id}.dkr.ecr.${uae_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 	elif [ "${2}" = "${spain_region}" ]; then
 		publish_ssm ${spain_region} ${spain_account_id}.dkr.ecr.${spain_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
+  	elif [ "${2}" = "${israel_region}" ]; then
+		publish_ssm ${israel_region} ${israel_account_id}.dkr.ecr.${israel_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 	elif [ "${2}" = "${zurich_region}" ]; then
 		publish_ssm ${zurich_region} ${zurich_account_id}.dkr.ecr.${zurich_region}.amazonaws.com/aws-for-fluent-bit ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
 	elif [ "${2}" = "${hyderabad_region}" ]; then
@@ -1166,6 +1196,8 @@ if [ "${1}" = "cicd-verify-ssm" ]; then
 		verify_ssm ${uae_region} true ${uae_account_id}
 	elif [ "${2}" = "${spain_region}" ]; then
 		verify_ssm ${spain_region} true ${spain_account_id}
+  	elif [ "${2}" = "${israel_region}" ]; then
+		verify_ssm ${israel_region} true ${israel_account_id}
 	elif [ "${2}" = "${zurich_region}" ]; then
 		verify_ssm ${zurich_region} true ${zurich_account_id}
 	elif [ "${2}" = "${hyderabad_region}" ]; then
