@@ -115,7 +115,7 @@ spain_region="eu-south-2"
 
 spain_account_id="146576467002"
 
-israel_region="613967699436"
+israel_region="il-central-1"
 
 israel_account="613967699436"
 
