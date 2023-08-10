@@ -255,31 +255,7 @@ publish_to_public_ecr() {
 
 publish_ssm() {
 	# This optional parameter indicates if we should publish stable (defaults to false)
-	if [ ${4:-false} = true ]; then
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/stable --overwrite \
-			--description 'Regional Amazon ECR Image URI for the latest stable AWS for Fluent Bit Docker Image' \
-			--type String --region ${1} --value ${2}:${3}
-	else
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/${3} --overwrite \
-			--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
-			--type String --region ${1} --value ${2}:${3}
-
-		if [ "${PUBLISH_LATEST}" = "true" ]; then
-			aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/latest --overwrite \
-				--description 'Regional Amazon ECR Image URI for the latest AWS for Fluent Bit Docker Image' \
-				--type String --region ${1} --value ${2}:latest
-		fi
-		
-		aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/"$init"-${3} --overwrite \
-			--description 'Regional Amazon ECR Image URI for the "$init"-latest AWS for Fluent Bit Docker Image' \
-			--type String --region ${1} --value ${2}:"$init"-${3}
-
-		if [ "${PUBLISH_LATEST}" = "true" ]; then
-			aws ssm put-parameter --name /aws/service/aws-for-fluent-bit/"$init"-latest --overwrite \
-				--description 'Regional Amazon ECR Image URI for the "$init"-latest AWS for Fluent Bit Docker Image' \
-				--type String --region ${1} --value ${2}:"$init"-latest
-		fi
-	fi
+	echo "Publish ssm!"
 }
 
 rollback_ssm() {
