@@ -406,25 +406,7 @@ sync_image_version() {
 }
 
 verify_ssm() {
-	is_sync_task=${2:-false}
-
-	endpoint='amazonaws.com'
-	
-	if [ "${1}" = "cn-north-1" ] || [ "${1}" = "cn-northwest-1" ]; then
-		endpoint=${endpoint}.cn
-	fi
-	aws ecr get-login-password --region ${1} | docker login --username AWS --password-stdin ${3}.dkr.ecr.${1}.${endpoint}
-
-	if [ "${PUBLISH_LATEST}" = "true" ]; then
-		check_parameter ${1} latest
-	fi
-
-	if [ "${is_sync_task}" = "true" ]; then
-		check_parameter ${1} ${AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB}
-		check_parameter ${1} stable
-	else
-		check_parameter ${1} ${AWS_FOR_FLUENT_BIT_VERSION}
-	fi
+	echo "hello world"
 }
 
 create_manifest_list() {
