@@ -32,8 +32,9 @@ echo "Publish Latest? ${PUBLISH_LATEST}"
 
 # this code currenly works because DockerHub returns the only last 100 tags and as of March 2023 we only have 64
 # and it should keep working because dockerhub returns the latest tags first
-docker_hub_image_tags=$(curl -s -S 'https://registry.hub.docker.com/v2/repositories/amazon/aws-for-fluent-bit/tags/?page=1&page_size=250' | jq -r '.results[].name')
-tag_array=(`echo ${docker_hub_image_tags}`)
+public_ecr_image_tags_token=$(curl -k https://public.ecr.aws/token/ | jq -r '.token')
+public_ecr_image_tags=$(curl -s -S  -k -H "Authorization: Bearer $public_ecr_image_tags_token"  'https://public.ecr.aws/v2/aws-observability/aws-for-fluent-bit/tags/list?page=1&page_size=250'  | jq -r '.tags[]' | sort -rV)
+tag_array=(`echo ${public_ecr_image_tags}`)
 AWS_FOR_FLUENT_BIT_VERSION_DOCKERHUB=$(./get_latest_dockerhub_version.py linux latest ${tag_array[@]})
 
 # If the AWS_FOR_FLUENT_BIT_VERSION is an older version which is already published to dockerhub
