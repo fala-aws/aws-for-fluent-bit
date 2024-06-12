@@ -153,7 +153,10 @@ func validate_s3(s3Client *s3.S3, bucket string, prefix string, inputMap map[str
 
 				decodeError := json.Unmarshal([]byte(d), &message)
 				if decodeError != nil {
-					exitErrorf("[TEST FAILURE] Json Unmarshal Error:", decodeError)
+					fmt.Println("[TEST ERROR] Malform log entry. Unmarshal Error:", decodeError)
+					fmt.Println("             Malform entry: %s", d)
+					// Skip malform log entries (count them as lost logs)
+					continue
 				}
 
 				// First 8 char is the unique record ID
@@ -172,7 +175,7 @@ func validate_s3(s3Client *s3.S3, bucket string, prefix string, inputMap map[str
 		continuationToken = response.NextContinuationToken
 	}
 
-	fmt.Println("Total object in S3: ", s3ObjectCounter)
+	fmt.Println("total_s3_obj, ", s3ObjectCounter)
 
 	return s3RecordCounter, inputMap
 }
@@ -269,15 +272,17 @@ func get_results(totalInputRecord int, totalRecordFound int, recordMap map[strin
 		}
 	}
 
-	fmt.Println("Total input record: ", totalInputRecord)
-	fmt.Println("Total record in destination: ", totalRecordFound)
-	fmt.Println("Unique record in destination: ", uniqueRecordFound)
-	fmt.Println("Duplicate records: ", (totalRecordFound - uniqueRecordFound))
-	fmt.Println("Log Delay: ", logDelay)
-	fmt.Println("Log Loss: ", (totalInputRecord-uniqueRecordFound)*100/totalInputRecord, "%")
+	fmt.Println("total_input, ", totalInputRecord)
+	fmt.Println("total_destination, ", totalRecordFound)
+	fmt.Println("unique, ", uniqueRecordFound)
+	fmt.Println("duplicate, ", (totalRecordFound - uniqueRecordFound))
+	fmt.Println("delay, ", logDelay)
+	fmt.Println("percent_loss, ", (totalInputRecord-uniqueRecordFound)*100/totalInputRecord) // %
 
 	if totalInputRecord != uniqueRecordFound {
-		fmt.Println("Number of missing log records: ", totalInputRecord-uniqueRecordFound)
+		fmt.Println("missing, ", totalInputRecord-uniqueRecordFound)
+	} else {
+		fmt.Println("missing, ", 0)
 	}
 }
 

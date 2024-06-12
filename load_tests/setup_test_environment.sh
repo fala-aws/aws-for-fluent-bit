@@ -15,9 +15,10 @@ read -r -a outputArray <<< "$stackOutputs"
 export S3_BUCKET_NAME="${outputArray[0]}"
 
 # Set necessary images as env vars
-export FLUENT_BIT_IMAGE="${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/amazon/aws-for-fluent-bit-test:latest"
+export FLUENT_BIT_IMAGE="826489191740.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-for-fluent-bit:long-tag"
 export ECS_APP_IMAGE="906394416424.dkr.ecr.us-west-2.amazonaws.com/load-test-fluent-bit-ecs-app-image:latest"
 export EKS_APP_IMAGE="906394416424.dkr.ecr.us-west-2.amazonaws.com/load-test-fluent-bit-eks-app-image:latest"
+export ECS_APP_IMAGE_TCP="906394416424.dkr.ecr.us-west-2.amazonaws.com/load-test-fluent-bit-ecs-app-image-tcp:latest"
 # Label EKS nodes
 if [ $PLATFORM == "EKS" ]
 then

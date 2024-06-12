@@ -3,11 +3,13 @@ import sys
 import json
 import time
 import boto3
+import math
 import subprocess
+import validation_bar
 from datetime import datetime, timezone
 import create_testing_resources.kinesis_s3_firehose.resource_resolver as resource_resolver
 
-IS_TASK_DEFINITION_PRINTED = False
+IS_TASK_DEFINITION_PRINTED = True
 PLATFORM = os.environ['PLATFORM'].lower()
 OUTPUT_PLUGIN = os.environ['OUTPUT_PLUGIN'].lower()
 TESTING_RESOURCES_STACK_NAME = os.environ['TESTING_RESOURCES_STACK_NAME']
@@ -25,15 +27,24 @@ else:
 INPUT_LOGGERS = [
     {
         "name": "stdstream",
-        "logger_image": "075490442118.dkr.ecr.us-west-2.amazonaws.com/load-test-fluent-bit-app-image:latest",
-        "fluent_config_file_path": "./load_tests/logger/stdout_logger/fluent.conf"
+        "logger_image": os.getenv('ECS_APP_IMAGE'), # STDOUT Logs
+        "fluent_config_file_path": "./load_tests/logger/stdout_logger/fluent.conf",
+        "log_configuration_path": "./load_tests/logger/stdout_logger/log_configuration"
     },
     {
         "name": "tcp",
-        "logger_image": "826489191740.dkr.ecr.us-west-2.amazonaws.com/amazon/tcp-logger:latest",
-        "fluent_config_file_path": "./load_tests/logger/tcp_logger/fluent.conf"
+        "logger_image": os.getenv('ECS_APP_IMAGE_TCP'), # TCP Logs Java App
+        "fluent_config_file_path": "./load_tests/logger/tcp_logger/fluent.conf",
+        "log_configuration_path": "./load_tests/logger/tcp_logger/log_configuration"
     },
 ]
+
+PLUGIN_NAME_MAPS = {
+    "kinesis": "kinesis_streams",
+    "firehose": "kinesis_firehose",
+    "s3": "s3",
+    "cloudwatch": "cloudwatch_logs",
+}
 
 # Return the approximate log delay for each ecs load test
 # Estimate log delay = task_stop_time - task_start_time - logger_image_run_time
@@ -58,6 +69,7 @@ def check_app_exit_code(response):
         sys.exit('[TEST_FAILURE] Error occured to get task container list')
     for container in containers:
         if container['name'] == 'app' and container['exitCode'] != 0:
+            print('[TEST_FAILURE] Logger failed to generate all logs with exit code: ' + str(container['exitCode']))
             sys.exit('[TEST_FAILURE] Logger failed to generate all logs with exit code: ' + str(container['exitCode']))
 
 # Return the total number of input records for each load test
@@ -67,7 +79,7 @@ def calculate_total_input_number(throughput):
 
 # 1. Configure task definition for each load test based on existing templates
 # 2. Register generated task definition
-def generate_task_definition(throughput, input_logger, s3_fluent_config_arn):
+def generate_task_definition(session, throughput, input_logger, s3_fluent_config_arn):
     if not hasattr(generate_task_definition, "counter"):
         generate_task_definition.counter = 0  # it doesn't exist yet, so initialize it
     generate_task_definition.counter += 1
@@ -98,7 +110,6 @@ def generate_task_definition(throughput, input_logger, s3_fluent_config_arn):
         '$CUSTOM_S3_OBJECT_NAME':           resource_resolver.resolve_s3_object_name(custom_config),
 
         # Plugin Specific Environment Variables
-        '$APP_IMAGE': os.environ['ECS_APP_IMAGE'],
         'cloudwatch': {
             '$CW_LOG_GROUP_NAME':               os.environ['CW_LOG_GROUP_NAME'],
             '$STD_LOG_STREAM_NAME':             resource_resolver.resolve_cloudwatch_logs_stream_name(std_config),
@@ -117,26 +128,37 @@ def generate_task_definition(throughput, input_logger, s3_fluent_config_arn):
             '$STD_S3_OBJECT_NAME':              resource_resolver.resolve_s3_object_name(std_config),
         },
     }
+
+    # Add log configuration to dictionary
+    log_configuration_data = open(f'{input_logger["log_configuration_path"]}/{OUTPUT_PLUGIN}.json', 'r')
+    log_configuration_raw = log_configuration_data.read()
+    log_configuration = parse_json_template(log_configuration_raw, task_definition_dict)
+    task_definition_dict["$LOG_CONFIGURATION"] = log_configuration
+
+    # Parse task definition template
     fin = open(f'./load_tests/task_definitions/{OUTPUT_PLUGIN}.json', 'r')
     data = fin.read()
-    for key in task_definition_dict:
-        if(key[0] == '$'):
-            data = data.replace(key, task_definition_dict[key])
-        elif(key == OUTPUT_PLUGIN):
-            for sub_key in task_definition_dict[key]:
-                data = data.replace(sub_key, task_definition_dict[key][sub_key])
-    fout = open(f'./load_tests/task_definitions/{OUTPUT_PLUGIN}_{throughput}.json', 'w')
-    fout.write(data)
-    fout.close()
-    fin.close()
+    task_def_formatted = parse_json_template(data, task_definition_dict)
 
-    os.system(f'aws ecs register-task-definition --cli-input-json file://load_tests/task_definitions/{OUTPUT_PLUGIN}_{throughput}.json {(">/dev/null", "")[IS_TASK_DEFINITION_PRINTED]}')
+    # Register task definition
+    task_def = json.loads(task_def_formatted)
+    
+    if IS_TASK_DEFINITION_PRINTED:
+        print("Registering task definition:")
+        print(json.dumps(task_def, indent=4))
+        session.client('ecs').register_task_definition(
+            **task_def
+        )
+    else:
+        print("Registering task definition")
 
 # With multiple codebuild projects running parallel,
 # Testing resources only needs to be created once
 def create_testing_resources():
+    session = get_sts_boto_session()
+
     if OUTPUT_PLUGIN != 'cloudwatch':
-        client = boto3.client('cloudformation')
+        client = session.client('cloudformation')
         waiter = client.get_waiter('stack_exists')
         waiter.wait(
             StackName=TESTING_RESOURCES_STACK_NAME,
@@ -170,24 +192,28 @@ def create_testing_resources():
 #  4. validate logs and print the result
 def run_ecs_tests():
     ecs_cluster_name = os.environ['ECS_CLUSTER_NAME']
-    client = boto3.client('ecs')
-    waiter = client.get_waiter('tasks_stopped')
     names = locals()
 
     # Run ecs tests once per input logger type
+    test_results = []
     for input_logger in INPUT_LOGGERS:
-        processes = set()
+        session = get_sts_boto_session()
+
+        client = session.client('ecs')
+        waiter = client.get_waiter('tasks_stopped')
+        
+        processes = []
 
         # Delete corresponding testing data for a fresh start
-        delete_testing_data()
+        delete_testing_data(session)
 
         # S3 Fluent Bit extra config data
-        s3_fluent_config_arn = publish_fluent_config_s3(input_logger)
+        s3_fluent_config_arn = publish_fluent_config_s3(session, input_logger)
 
         # Run ecs tasks and store task arns
         for throughput in THROUGHPUT_LIST:
             os.environ['THROUGHPUT'] = throughput
-            generate_task_definition(throughput, input_logger, s3_fluent_config_arn)
+            generate_task_definition(session, throughput, input_logger, s3_fluent_config_arn)
             response = client.run_task(
                     cluster=ecs_cluster_name,
                     launchType='EC2',
@@ -196,7 +222,7 @@ def run_ecs_tests():
             names[f'{OUTPUT_PLUGIN}_{throughput}_task_arn'] = response['tasks'][0]['taskArn']
         
         # Validation input type banner
-        print(f'\nValidation results for input type: {input_logger["name"]}')
+        print(f'\nTest {input_logger["name"]} to {OUTPUT_PLUGIN} in progress...')
 
         # Wait until task stops and start validation
         for throughput in THROUGHPUT_LIST:
@@ -221,29 +247,153 @@ def run_ecs_tests():
             stop_time = response['tasks'][0]['stoppedAt']
             log_delay = get_log_delay(parse_time(stop_time)-parse_time(start_time)-LOGGER_RUN_TIME_IN_SECOND)
             set_buffer(parse_time(stop_time))
-            log_delay = get_log_delay(response)
-            set_buffer(response)
+
             # Validate logs
             os.environ['LOG_SOURCE_NAME'] = input_logger["name"]
             os.environ['LOG_SOURCE_IMAGE'] = input_logger["logger_image"]
             validated_input_prefix = get_validated_input_prefix(input_logger)
             input_configuration = resource_resolver.get_input_configuration(PLATFORM, validated_input_prefix, throughput)
+            test_configuration = {
+                "input_configuration": input_configuration,
+            }
             if OUTPUT_PLUGIN == 'cloudwatch':
-                os.environ['LOG_PREFIX'] = resource_resolver.get_destination_cloudwatch_prefix(input_configuration)
+                os.environ['LOG_PREFIX'] = resource_resolver.get_destination_cloudwatch_prefix(test_configuration["input_configuration"])
                 os.environ['DESTINATION'] = 'cloudwatch'
             else:
-                os.environ['LOG_PREFIX'] = resource_resolver.get_destination_s3_prefix(input_configuration, OUTPUT_PLUGIN)
+                os.environ['LOG_PREFIX'] = resource_resolver.get_destination_s3_prefix(test_configuration["input_configuration"], OUTPUT_PLUGIN)
                 os.environ['DESTINATION'] = 's3'
-            processes.add(subprocess.Popen(['go', 'run', './load_tests/validation/validate.go', input_record, log_delay]))
-        
+
+            # Go script environment with sts cred variables
+            credentials = session.get_credentials()
+            auth_env = {
+                **os.environ.copy(),
+                "AWS_ACCESS_KEY_ID": credentials.access_key,
+                "AWS_SECRET_ACCESS_KEY": credentials.secret_key,
+                "AWS_SESSION_TOKEN": credentials.token
+            }
+            processes.append({
+                "input_logger": input_logger,
+                "test_configuration": test_configuration,
+                "process": subprocess.Popen(['go', 'run', './load_tests/validation/validate.go', input_record, log_delay], stdout=subprocess.PIPE,
+                    env=auth_env
+                )
+            })
+
         # Wait until all subprocesses for validation completed
         for p in processes:
-            p.wait()
+            p["process"].wait()
+            p["result"], err = p["process"].communicate()
+        print(f'Test {input_logger["name"]} to {OUTPUT_PLUGIN} complete.')
+
+        parsedValidationOutputs = list(map(lambda p: {
+            **p,
+            "parsed_validation_output": parse_validation_output(p["result"])
+        }, processes))
+
+        test_results.extend(parsedValidationOutputs)
+
+        # Wait for task resources to free up
+        time.sleep(60)
+
+    # Print output
+    print("\n\nValidation results:\n")
+    print(format_test_results_to_markdown(test_results))
+
+    # Bar check
+    if not validation_bar.bar_raiser(test_results):
+        print("Failed validation bar.")
+        sys.exit("Failed to pass the test_results validation bar")
+    else:
+        print("Passed validation bar.")
+
+def parse_validation_output(validationResultString):
+    return { x[0]: x[1] for x in list(
+        filter(lambda f: len(f) == 2,
+            map(lambda x: x.split(",  "), validationResultString.decode("utf-8").split("\n"))
+        ))}
+
+def get_validation_output(logger_name, throughput, test_results):
+    return list(filter(lambda r: r["input_logger"]["name"] == logger_name and
+            int(r["test_configuration"]["input_configuration"]["throughput"].replace("m", "")) == throughput, test_results))[0]["parsed_validation_output"]
+
+def format_test_results_to_markdown(test_results):
+    # Configurable success character
+    no_problem_cell_character = u"\U00002705" # This is a green check mark
+
+    # Get table dimensions
+    logger_names = list(set(map(lambda p: p["input_logger"]["name"], test_results)))
+    logger_names.sort()
+    plugin_name = PLUGIN_NAME_MAPS[OUTPUT_PLUGIN]
+    throughputs = list(set(map(lambda p: int(p["test_configuration"]["input_configuration"]["throughput"].replace("m", "")), test_results)))
+    throughputs.sort()
+
+    # | plugin                   | source               |                            | 10 MB/s       | 20 MB/s       | 30 MB/s       |\n"
+    # |--------------------------|----------------------|----------------------------|---------------|---------------|---------------|\n"
+    col1_len = len(" plugin                   ")
+    col2_len = len(" source               ")
+    col3_len = len("                            ")
+    colX_len = len(" 10 MB/s       ")
+
+    output  = f'|{" plugin".ljust(col1_len)}|{" source".ljust(col2_len)}|{"".ljust(col3_len)}|'
+    for throughput in throughputs:
+        output += (" " + str(throughput) + " MB/s").ljust(colX_len) + "|"
+    output += f"\n|{'-'*col1_len}|{'-'*col2_len}|{'-'*col3_len}|"
+    for throughput in throughputs:
+        output += f"{'-'*colX_len}|"
+    output += "\n"
+
+    # | kinesis_firehose          |  stdout             | Log Loss                   |               |               |               |\n"
+    for logger_name in logger_names:
+        output += "|"
+        output += (" " + plugin_name).ljust(col1_len) + "|"
+        output += (" " + logger_name).ljust(col2_len) + "|"
+        output += (" Log Loss").ljust(col3_len) + "|"
+
+        for throughput in throughputs:
+            validation_output = get_validation_output(logger_name, throughput, test_results)
+
+            if (int(validation_output["missing"]) != 0):
+                output += (str(validation_output["percent_loss"]) + "%(" + str(validation_output["missing"]) + ")").ljust(colX_len)
+            else:
+                output += (" " + no_problem_cell_character).ljust(colX_len)
+
+            output += "|"
+        output += "\n"
+
+        output += "|"
+        output += (" ").ljust(col1_len) + "|"
+        output += (" ").ljust(col2_len) + "|"
+        output += (" Log Duplication").ljust(col3_len) + "|"
+
+        for throughput in throughputs:
+            validation_output = get_validation_output(logger_name, throughput, test_results)
+
+            duplication_percent = (0 if int(validation_output["duplicate"]) == 0
+                else math.floor(int(validation_output["duplicate"]) / int(validation_output["total_destination"]) * 100))
+
+            if (int(validation_output["duplicate"]) != 0):
+                output += (str(duplication_percent) + "%(" + str(validation_output["duplicate"]) + ")").ljust(colX_len)
+            else:
+                output += (" " + no_problem_cell_character).ljust(colX_len)
+
+            output += "|"
+        output += "\n"
+    return output
+
+def parse_json_template(template, dict):
+    data = template
+    for key in dict:
+            if(key[0] == '$'):
+                data = data.replace(key, dict[key])
+            elif(key == OUTPUT_PLUGIN):
+                for sub_key in dict[key]:
+                    data = data.replace(sub_key, dict[key][sub_key])
+    return data
 
 # Returns s3 arn
-def publish_fluent_config_s3(input_logger):
+def publish_fluent_config_s3(session, input_logger):
     bucket_name = os.environ['S3_BUCKET_NAME']
-    s3 = boto3.client('s3')
+    s3 = session.client('s3')
     s3.upload_file(
         input_logger["fluent_config_file_path"],
         bucket_name,
@@ -253,11 +403,11 @@ def publish_fluent_config_s3(input_logger):
 
 # The following method is used to clear data between
 # testing batches
-def delete_testing_data():
+def delete_testing_data(session):
     # All testing data related to the plugin option will be deleted
     if OUTPUT_PLUGIN == 'cloudwatch':
         # Delete associated cloudwatch log streams
-        client = boto3.client('logs')
+        client = session.client('logs')
         response = client.describe_log_streams(
             logGroupName=os.environ['CW_LOG_GROUP_NAME']
         )
@@ -268,7 +418,7 @@ def delete_testing_data():
             )
     else:
         # Delete associated s3 bucket objects
-        s3 = boto3.resource('s3')
+        s3 = session.resource('s3')
         bucket = s3.Bucket(os.environ['S3_BUCKET_NAME'])
         s3_objects = bucket.objects.filter(Prefix=f'{OUTPUT_PLUGIN}-test/{PLATFORM}/')
         s3_objects.delete()
@@ -321,13 +471,16 @@ def run_eks_tests():
         p.wait()
 
 def delete_testing_resources():
+    # Create sts session
+    session = get_sts_boto_session()
+
     # All related testing resources will be destroyed once the stack is deleted 
-    client = boto3.client('cloudformation')
+    client = session.client('cloudformation')
     client.delete_stack(
         StackName=TESTING_RESOURCES_STACK_NAME
     )
     # Empty s3 bucket
-    s3 = boto3.resource('s3')
+    s3 = session.resource('s3')
     bucket = s3.Bucket(os.environ['S3_BUCKET_NAME'])
     bucket.objects.all().delete()
     # scale down eks cluster
@@ -345,6 +498,28 @@ def get_validated_input_prefix(input_logger):
     if (input_logger['name'] == 'stdstream'):
         return resource_resolver.STD_INPUT_PREFIX
     return resource_resolver.CUSTOM_INPUT_PREFIX
+
+def get_sts_boto_session():
+    # STS credentials
+    sts_client = boto3.client('sts')
+
+    # Call the assume_role method of the STSConnection object and pass the role
+    # ARN and a role session name.
+    assumed_role_object = sts_client.assume_role(
+        RoleArn=os.environ["LOAD_TEST_CFN_ROLE_ARN"],
+        RoleSessionName="load-test-cfn"
+    )
+
+    # From the response that contains the assumed role, get the temporary 
+    # credentials that can be used to make subsequent API calls
+    credentials=assumed_role_object['Credentials']
+
+    # Create boto session
+    return boto3.Session(
+        aws_access_key_id=credentials['AccessKeyId'],
+        aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken']
+    )
 
 if sys.argv[1] == 'create_testing_resources':
     create_testing_resources()
